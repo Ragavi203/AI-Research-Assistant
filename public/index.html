@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Research Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #4facfe;
+            transform: translateY(-2px);
+        }
+
+        .upload-section.dragover {
+            border-color: #4facfe;
+            background: #e3f2fd;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .papers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .paper-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+
+        .paper-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .paper-card.selected {
+            border-color: #4facfe;
+            box-shadow: 0 10px 30px rgba(79, 172, 254, 0.2);
+        }
+
+        .paper-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .paper-authors {
+            color: #6c757d;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .key-findings {
+            margin-bottom: 15px;
+        }
+
+        .key-findings h4 {
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .findings-list {
+            list-style: none;
+        }
+
+        .findings-list li {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4facfe;
+            font-size: 0.9em;
+        }
+
+        .concepts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .concept-tag {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .compare-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .compare-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .compare-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 107, 107, 0.3);
+        }
+
+        .compare-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .comparison-result {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            border: 1px solid #e9ecef;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .checkbox-wrapper {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .paper-card {
+            position: relative;
+        }
+
+        .methodology {
+            background: #e8f5e8;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #28a745;
+        }
+
+        .methodology h4 {
+            color: #155724;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 AI Research Assistant</h1>
+            <p>Upload academic papers • Extract insights • Synthesize knowledge</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Upload Section -->
+            <div class="upload-section" id="uploadSection">
+                <h3>📄 Upload Academic Papers</h3>
+                <p style="margin: 15px 0; color: #6c757d;">Drag & drop PDF files or click to browse</p>
+                <input type="file" id="fileInput" class="file-input" accept=".pdf" multiple>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose PDF Files
+                </button>
+                <div id="uploadStatus"></div>
+            </div>
+
+            <!-- Papers Display -->
+            <div id="papersContainer">
+                <div id="loadingIndicator" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Analyzing paper with Claude AI...</p>
+                </div>
+                <div class="papers-grid" id="papersGrid"></div>
+            </div>
+
+            <!-- Comparison Section -->
+            <div class="compare-section">
+                <h3>🔍 Compare Papers</h3>
+                <p style="margin: 15px 0; color: #6c757d;">Select 2 or more papers to analyze connections and differences</p>
+                <button class="compare-btn" id="compareBtn" onclick="comparePapers()" disabled>
+                    Compare Selected Papers (<span id="selectedCount">0</span>)
+                </button>
+                <div id="comparisonResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let papers = [];
+        let selectedPapers = new Set();
+
+        // File upload handling
+        document.getElementById('fileInput').addEventListener('change', handleFiles);
+        
+        // Drag and drop
+        const uploadSection = document.getElementById('uploadSection');
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+        
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+        
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            handleFiles({ target: { files: e.dataTransfer.files } });
+        });
+
+        async function handleFiles(event) {
+            const files = Array.from(event.target.files);
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            for (const file of files) {
+                if (file.type === 'application/pdf') {
+                    loadingIndicator.style.display = 'block';
+                    await uploadPaper(file);
+                    loadingIndicator.style.display = 'none';
+                }
+            }
+            
+            loadPapers();
+        }
+
+        async function uploadPaper(file) {
+            const formData = new FormData();
+            formData.append('paper', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('Paper uploaded successfully:', result.paper);
+                    updateUploadStatus(`✅ ${file.name} analyzed successfully!`, 'success');
+                } else {
+                    updateUploadStatus(`❌ Failed to analyze ${file.name}`, 'error');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                updateUploadStatus(`❌ Error uploading ${file.name}`, 'error');
+            }
+        }
+
+        function updateUploadStatus(message, type) {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = `<p style="color: ${type === 'success' ? 'green' : 'red'}; margin-top: 15px;">${message}</p>`;
+            setTimeout(() => statusDiv.innerHTML = '', 3000);
+        }
+
+        async function loadPapers() {
+            try {
+                const response = await fetch('/papers');
+                papers = await response.json();
+                displayPapers();
+            } catch (error) {
+                console.error('Error loading papers:', error);
+            }
+        }
+
+        function displayPapers() {
+            const grid = document.getElementById('papersGrid');
+            grid.innerHTML = '';
+
+            papers.forEach(paper => {
+                const card = createPaperCard(paper);
+                grid.appendChild(card);
+            });
+        }
+
+        function createPaperCard(paper) {
+            const card = document.createElement('div');
+            card.className = 'paper-card';
+            card.dataset.paperId = paper.id;
+
+            const analysis = paper.analysis || {};
+            
+            card.innerHTML = `
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" onchange="togglePaperSelection(${paper.id}, this.checked)">
+                </div>
+                
+                <div class="paper-title">
+                    ${analysis.title || paper.filename}
+                </div>
+                
+                ${analysis.authors ? `
+                    <div class="paper-authors">
+                        👥 ${Array.isArray(analysis.authors) ? analysis.authors.join(', ') : analysis.authors}
+                    </div>
+                ` : ''}
+                
+                ${analysis.abstract ? `
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 10px 0; font-size: 0.9em; line-height: 1.5;">
+                        ${analysis.abstract}
+                    </div>
+                ` : ''}
+                
+                ${analysis.methodology ? `
+                    <div class="methodology">
+                        <h4>🔬 Methodology</h4>
+                        <div style="font-size: 0.9em;">${analysis.methodology}</div>
+                    </div>
+                ` : ''}
+                
+                ${analysis.keyFindings && analysis.keyFindings.length > 0 ? `
+                    <div class="key-findings">
+                        <h4>🎯 Key Findings</h4>
+                        <ul class="findings-list">
+                            ${analysis.keyFindings.map(finding => `<li>${finding}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+                
+                ${analysis.concepts && analysis.concepts.length > 0 ? `
+                    <div class="concepts">
+                        ${analysis.concepts.map(concept => `<span class="concept-tag">${concept}</span>`).join('')}
+                    </div>
+                ` : ''}
+            `;
+
+            return card;
+        }
+
+        function togglePaperSelection(paperId, isSelected) {
+            const card = document.querySelector(`[data-paper-id="${paperId}"]`);
+            
+            if (isSelected) {
+                selectedPapers.add(paperId);
+                card.classList.add('selected');
+            } else {
+                selectedPapers.delete(paperId);
+                card.classList.remove('selected');
+            }
+
+            updateCompareButton();
+        }
+
+        function updateCompareButton() {
+            const compareBtn = document.getElementById('compareBtn');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            selectedCount.textContent = selectedPapers.size;
+            compareBtn.disabled = selectedPapers.size < 2;
+        }
+
+        async function comparePapers() {
+            const resultDiv = document.getElementById('comparisonResult');
+            
+            if (selectedPapers.size < 2) {
+                alert('Please select at least 2 papers to compare');
+                return;
+            }
+
+            resultDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Comparing papers with Claude AI...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/compare', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        paperIds: Array.from(selectedPapers)
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="comparison-result">
+                            <h3 style="color: #2c3e50; margin-bottom: 20px;">📊 Paper Comparison Analysis</h3>
+                            ${result.comparison}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ Comparison failed: ${result.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Comparison error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">❌ Error performing comparison</p>`;
+            }
+        }
+
+        // Load existing papers on page load
+        window.addEventListener('load', loadPapers);
+    </script>
+</body>
+</html>
